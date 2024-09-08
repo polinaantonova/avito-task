@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	_ "github.com/lib/pq"
 )
 
 type DBConnector struct{}
@@ -24,13 +26,20 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	port := os.Getenv("POSTGRES_PORT")
 	dbName := os.Getenv("POSTGRES_DATABASE")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
+	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
+		user = "polina"
+		password = "1234"
+		host = "localhost"
+		port = "5432"
+		dbName = "avito-task"
+	}
+
+	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
 		host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)
 
-	errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n, password: %v\n, dbName: %v\n", host, port, user, password, dbName)
+	errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
 	if err != nil {
 		http.Error(w, errorText, http.StatusInternalServerError)
 		return
@@ -47,9 +56,9 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Successfully connected!")
 
 	var result int
-	err = db.QueryRow("SELECT 1;").Scan(result)
+	err = db.QueryRow("SELECT 1;").Scan(&result)
 	if err != nil {
-		http.Error(w, "cannot execute query", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("cannot execute query, %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
