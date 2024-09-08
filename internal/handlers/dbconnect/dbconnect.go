@@ -16,7 +16,7 @@ import (
 
 type DBConnector struct{}
 
-func (d DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	user := os.Getenv("POSTGRES_USERNAME")
 	password := os.Getenv("POSTGRES_PASSWORD")
@@ -31,6 +31,7 @@ func (d DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		http.Error(w, "cannot connect to database", http.StatusInternalServerError)
+		return
 	}
 
 	defer db.Close()
@@ -38,6 +39,7 @@ func (d DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = db.Ping()
 	if err != nil {
 		http.Error(w, "cannot ping database", http.StatusInternalServerError)
+		return
 	}
 
 	fmt.Println("Successfully connected!")
@@ -46,6 +48,7 @@ func (d DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = db.QueryRow("SELECT 1;").Scan(result)
 	if err != nil {
 		http.Error(w, "cannot execute query", http.StatusInternalServerError)
+		return
 	}
 
 	if result == 1 {
@@ -54,6 +57,7 @@ func (d DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Error(w, "cannot return response", http.StatusInternalServerError)
+	return
 }
 
 func NewDBConnector() *DBConnector {
