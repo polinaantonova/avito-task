@@ -3,17 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"polina.com/m/internal/handlers/dbconnect"
 	"polina.com/m/internal/handlers/ping"
 )
 
-const portNum string = "0.0.0.0:8080"
-
 func main() {
+	serverAddress := os.Getenv("SERVER_ADDRESS")
+	if serverAddress == "" {
+		serverAddress = "0.0.0.0:8080"
+	}
+
 	pingHandler := ping.NewPing()
+	dBConnector := dbconnect.NewDBConnector()
 
 	http.Handle("/api/ping", pingHandler)
+	http.Handle("/api/dbconnect", dBConnector)
 
-	err := http.ListenAndServe(portNum, nil)
+	err := http.ListenAndServe(serverAddress, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
