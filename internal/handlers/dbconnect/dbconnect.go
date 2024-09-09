@@ -26,21 +26,24 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	port := os.Getenv("POSTGRES_PORT")
 	dbName := os.Getenv("POSTGRES_DATABASE")
 
-	//	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
-	//		user = "polina"
-	//		password = "1234"
-	//		host = "localhost"
-	//		port = "5432"
-	//		dbName = "avito-task"
-	//	}
+	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
+		errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+		http.Error(w, errorText, http.StatusInternalServerError)
+		return
+		//		user = "polina"
+		//		password = "1234"
+		//		host = "localhost"
+		//		port = "5432"
+		//		dbName = "avito-task"
+	}
 
 	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
 		host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)
-	errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
 
 	if err != nil {
+		errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
 		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
