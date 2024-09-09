@@ -55,7 +55,8 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = db.Ping()
 	if err != nil {
-		http.Error(w, "cannot ping database", http.StatusInternalServerError)
+		errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+		http.Error(w, errorText, http.StatusInternalServerError)
 		return
 	}
 
