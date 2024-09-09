@@ -39,7 +39,7 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)
-	fmt.Sprintf("host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+	errorText := fmt.Sprintf("host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
 
 	if err != nil {
 		http.Error(w, errorText, http.StatusInternalServerError)
