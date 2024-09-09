@@ -27,14 +27,17 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	dbName := os.Getenv("POSTGRES_DATABASE")
 
 	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
-		errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		http.Error(w, errorText, http.StatusInternalServerError)
-		return
-		//		user = "polina"
-		//		password = "1234"
-		//		host = "localhost"
-		//		port = "5432"
-		//		dbName = "avito-task"
+
+		//		errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+		//		http.Error(w, errorText, http.StatusInternalServerError)
+		//		return
+
+		//тестирую локально
+		user = "polina"
+		password = "1234"
+		host = "localhost"
+		port = "5432"
+		dbName = "avito-task"
 	}
 
 	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
