@@ -7,6 +7,7 @@ import (
 	"polina.com/m/internal/handlers/createTender"
 	"polina.com/m/internal/handlers/dbconnect"
 	"polina.com/m/internal/handlers/ping"
+	"polina.com/m/internal/handlers/structs/tender"
 )
 
 func main() {
@@ -14,10 +15,11 @@ func main() {
 	if serverAddress == "" {
 		serverAddress = "0.0.0.0:8080"
 	}
+	tenders := tender.NewTenderList()
 
 	pingHandler := ping.NewPing()
 	dBConnector := dbconnect.NewDBConnector()
-	tenderCreator := createTender.NewTenderCreator()
+	tenderCreator := createTender.NewTenderCreator(tenders)
 
 	http.Handle("/api/ping", pingHandler)
 	http.Handle("/api/dbconnect", dBConnector)

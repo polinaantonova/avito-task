@@ -2,15 +2,21 @@ package createTender
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"polina.com/m/internal/handlers/structs/tender"
 )
 
-type TenderCreator struct{}
+type TenderCreator struct {
+	tenders *tender.TenderList
+}
 
-func NewTenderCreator() *TenderCreator {
-	return &TenderCreator{}
+func NewTenderCreator(tenders *tender.TenderList) *TenderCreator {
+
+	return &TenderCreator{
+		tenders: tenders,
+	}
 }
 
 func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -27,27 +33,36 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender := tender.NewTender()
+	myTender := tender.NewTender()
 
-	err = json.Unmarshal(body, &tender)
+	err = json.Unmarshal(body, &myTender)
 	if err != nil {
 		http.Error(w, "bad JSON", http.StatusBadRequest)
 		return
 	}
 
-	err = tender.ValidateTenderServiceType()
+	err = myTender.ValidateTenderServiceType()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = tender.ValidateStringFieldsLen()
+	err = myTender.ValidateStringFieldsLen()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	response, err := json.Marshal(tender)
+	err = myTender.ValidateUser()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	tC.tenders.AddTender(myTender)
+	fmt.Println(tC.tenders.TenderList)
+
+	response, err := json.Marshal(myTender)
 	if err != nil {
 		http.Error(w, "bad JSON", http.StatusBadRequest)
 		return

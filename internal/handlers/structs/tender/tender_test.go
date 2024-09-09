@@ -20,5 +20,24 @@ func TestValidation(t *testing.T) {
 			err := tender.ValidateStringFieldsLen()
 			require.Error(t, err)
 		})
+
+		t.Run("username validation error", func(t *testing.T) {
+			tender.CreatorUsername = "user10"
+			err := tender.ValidateUser()
+			require.Error(t, err)
+		})
+
+		t.Run("username validation ok", func(t *testing.T) {
+			tender.CreatorUsername = "user1"
+			err := tender.ValidateUser()
+			require.Nil(t, err)
+		})
+
+		t.Run("username validation empty", func(t *testing.T) {
+			tender.CreatorUsername = ""
+			err := tender.ValidateUser()
+			require.Error(t, err)
+		})
 	})
+
 }
