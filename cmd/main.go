@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"net/http"
 	"os"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/adaptor"
+
 	"polina.com/m/internal/handlers/allTenders"
 	"polina.com/m/internal/handlers/createTender"
 	"polina.com/m/internal/handlers/dbconnect"
@@ -26,16 +30,28 @@ func main() {
 	tenderByUser := tendersByUser.NewTendersByUser(tenders)
 	//tenderStatus := tenderStatus2.NewTenderStatus(tenders)
 
-	http.Handle("/api/ping", pingHandler)
-	http.Handle("/api/dbconnect", dBConnector)
-	http.Handle("/api/tenders/new", tenderCreator)
-	http.Handle("/api/tenders", tendersByService)
-	http.Handle("/api/tenders/my", tenderByUser)
+	app := fiber.New()
+	app.Get("/api/ping", adaptor.HTTPHandler(pingHandler))
+	app.Get("/api/dbconnect", adaptor.HTTPHandler(dBConnector))
+	app.Post("/api/tenders/new", adaptor.HTTPHandler(tenderCreator))
+	app.Get("/api/tenders", adaptor.HTTPHandler(tendersByService))
+	app.Get("/api/tenders/my", adaptor.HTTPHandler(tenderByUser))
+	app.Get("/api/tenders/:tenderID/status", func(ctx fiber.Ctx) error {
+		tenderID := ctx.Params("tenderID", "")
+		fmt.Println("tenderID: ", tenderID)
+		if tenderID == "" {
+			return fiber.ErrBadRequest
+		}
 
-	//router := httprouter.New()
-	//router.GET("/tenders/:tenderID/status", tenderStatus)
+		for _, tender := range tenders.List() {
+			if tender.Id == tenderID {
+				ctx.SendString(tender.Status)
+			}
+		}
+		return fiber.ErrNotFound
+	})
 
-	err := http.ListenAndServe(serverAddress, nil)
+	err := app.Listen(serverAddress)
 	if err != nil {
 		log.Fatal(err)
 	}

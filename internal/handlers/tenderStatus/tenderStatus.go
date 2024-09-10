@@ -2,10 +2,8 @@ package tenderStatus
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"polina.com/m/internal/tender"
-	"strconv"
 )
 
 type TenderStatus struct {
@@ -23,8 +21,7 @@ func NewTenderStatus(tenders *tender.TenderList) *TenderStatus {
 	}
 }
 
-func (tS *TenderStatus) ServeHTTP(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	_, _ = strconv.Atoi(ps.ByName("tenderID"))
+func (tS *TenderStatus) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		fmt.Println(r.URL)

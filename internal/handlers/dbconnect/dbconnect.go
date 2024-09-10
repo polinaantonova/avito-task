@@ -19,7 +19,6 @@ import (
 type DBConnector struct{}
 
 func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	user := os.Getenv("POSTGRES_USERNAME")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	host := os.Getenv("POSTGRES_HOST")

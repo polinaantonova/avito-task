@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -104,7 +105,7 @@ LIMIT 1;`
 
 	*/
 
-	var userID int
+	var userID uuid.UUID
 	err = db.QueryRow(query, t.CreatorUsername).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
