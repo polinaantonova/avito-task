@@ -78,7 +78,8 @@ func (t *Tender) ValidateUser() error {
 
 	err = db.Ping()
 	if err != nil {
-		return errors.New("cannot ping database")
+		errorText := fmt.Sprintf("cannot ping database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+		return errors.New(errorText)
 	}
 
 	fmt.Println("Successfully connected!")
@@ -93,6 +94,15 @@ FROM employee_id e
 JOIN organization_responsible o 
 ON e.id = o.user_id
 LIMIT 1;`
+
+	/*
+	   select 1
+	   from employee e
+	   join organization_responsible o on e.id = o.user_id
+	   where e.username = $1
+	   limit 1;
+
+	*/
 
 	var userID int
 	err = db.QueryRow(query, t.CreatorUsername).Scan(&userID)

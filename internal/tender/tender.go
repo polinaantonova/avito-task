@@ -28,15 +28,19 @@ func NewTender() *Tender {
 }
 
 type TenderList struct {
-	TenderList []*Tender
+	tenderList []*Tender
 }
 
 func NewTenderList() *TenderList {
 	return &TenderList{
-		TenderList: make([]*Tender, 0, 8),
+		tenderList: make([]*Tender, 0, 8),
 	}
 }
 
+func (tL *TenderList) List() []*Tender {
+	return tL.tenderList
+}
+
 func (tL *TenderList) AddTender(tender *Tender) {
-	tL.TenderList = append(tL.TenderList, tender)
+	tL.tenderList = append(tL.tenderList, tender)
 }

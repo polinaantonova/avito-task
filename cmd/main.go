@@ -7,7 +7,7 @@ import (
 	"polina.com/m/internal/handlers/createTender"
 	"polina.com/m/internal/handlers/dbconnect"
 	"polina.com/m/internal/handlers/ping"
-	"polina.com/m/internal/handlers/structs/tender"
+	"polina.com/m/internal/tender"
 )
 
 func main() {

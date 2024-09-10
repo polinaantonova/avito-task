@@ -2,10 +2,9 @@ package createTender
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"polina.com/m/internal/handlers/structs/tender"
+	"polina.com/m/internal/tender"
 )
 
 type TenderCreator struct {
@@ -60,7 +59,6 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tC.tenders.AddTender(myTender)
-	fmt.Println(tC.tenders.TenderList)
 
 	response, err := json.Marshal(myTender)
 	if err != nil {
