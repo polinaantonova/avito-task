@@ -28,9 +28,9 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
 
-		errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		http.Error(w, errorText, http.StatusInternalServerError)
-		return
+		//errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
+		//http.Error(w, errorText, http.StatusInternalServerError)
+		//return
 
 		//тестирую локально
 		//user = "polina"
@@ -38,9 +38,16 @@ func (d *DBConnector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		//host = "localhost"
 		//port = "5432"
 		//dbName = "avito-task"
+
+		user = "cnrprod1725725190-team-78136"
+		password = "cnrprod1725725190-team-78136"
+		host = "rc1b-5xmqy6bq501kls4m.mdb.yandexcloud.net"
+		port = "6432"
+		dbName = "cnrprod1725725190-team-78136"
+
 	}
 
-	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v",
 		host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)

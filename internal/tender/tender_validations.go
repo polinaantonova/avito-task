@@ -64,7 +64,7 @@ func (t *Tender) ValidateUser() error {
 		//dbName = "avito-task"
 	}
 
-	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v",
 		host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", psqlInfo)
