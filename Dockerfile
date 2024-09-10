@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN mkdir "bin"
-RUN apt-get install postgresql-client
+RUN apt-get update && apt-get install postgresql-client --yes
 
 RUN go build -o bin/server ./cmd
 
