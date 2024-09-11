@@ -41,14 +41,20 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filteredTenders := tender.NewTenderList()
 	paginatedTenders := tender.NewTenderList()
 
-	if username != "" {
+	if username == "" {
+		http.Error(w, "please specify user", http.StatusUnauthorized)
+		return
+	} else {
 		for _, myTender := range tU.tenders.List() {
 			if myTender.CreatorUsername == username {
 				filteredTenders.AddTender(myTender)
 			}
 		}
-	} else {
-		filteredTenders = tU.tenders
+	}
+
+	if len(filteredTenders.List()) == 0 {
+		http.Error(w, "user doesn't exist or didn't create tenders", http.StatusUnauthorized)
+		return
 	}
 
 	sort.SliceStable(filteredTenders.List(), func(i, j int) bool {
@@ -76,5 +82,4 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
-
 }

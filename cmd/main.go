@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gofiber/fiber/v3"
@@ -28,7 +29,6 @@ func main() {
 	tenderCreator := createTender.NewTenderCreator(tenders)
 	tendersByService := allTenders.NewAllTenders(tenders)
 	tenderByUser := tendersByUser.NewTendersByUser(tenders)
-	//tenderStatus := tenderStatus2.NewTenderStatus(tenders)
 
 	app := fiber.New()
 	app.Get("/api/ping", adaptor.HTTPHandler(pingHandler))
@@ -38,14 +38,19 @@ func main() {
 	app.Get("/api/tenders/my", adaptor.HTTPHandler(tenderByUser))
 	app.Get("/api/tenders/:tenderID/status", func(ctx fiber.Ctx) error {
 		tenderID := ctx.Params("tenderID", "")
-		fmt.Println("tenderID: ", tenderID)
 		if tenderID == "" {
 			return fiber.ErrBadRequest
 		}
 
 		for _, tender := range tenders.List() {
 			if tender.Id == tenderID {
-				ctx.SendString(tender.Status)
+				response, err := json.Marshal(tender.Status)
+				if err != nil {
+					return fiber.ErrBadRequest
+				}
+				ctx.Status(http.StatusOK)
+				ctx.Write(response)
+				return nil
 			}
 		}
 		return fiber.ErrNotFound
