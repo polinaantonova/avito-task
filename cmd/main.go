@@ -3,10 +3,12 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"polina.com/m/internal/tender"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/adaptor"
@@ -63,6 +65,7 @@ func main() {
 	fmt.Println("Successfully connected!")
 
 	sqlStatement := `CREATE TABLE IF NOT EXISTS tenders(
+postgres_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 id UUID,
 name VARCHAR(100),
 description VARCHAR(500), 
@@ -76,7 +79,7 @@ version INT DEFAULT 1
 `
 	_, err = db.Exec(sqlStatement)
 	if err != nil {
-		log.Fatal("error while creating table tenders")
+		log.Fatal(err.Error())
 	}
 
 	//----------
@@ -97,37 +100,158 @@ version INT DEFAULT 1
 	app.Get("/api/tenders/:tenderID/status", func(ctx fiber.Ctx) error {
 		tenderID := ctx.Params("tenderID", "")
 		if tenderID == "" {
-			return fiber.ErrBadRequest
+			return fiber.NewError(fiber.StatusBadRequest, "Please specify tender id")
 		}
 
-		var status string
+		myTender := tender.NewTender()
+		myTender.Id = tenderID
 
-		err = db.QueryRow("SELECT status FROM Tenders WHERE id = $1", tenderID).Scan(&status)
-		if err == sql.ErrNoRows {
-			return fiber.ErrNotFound
+		err = db.QueryRow("SELECT status FROM Tenders WHERE id = $1 ORDER BY version DESC LIMIT 1", tenderID).Scan(&myTender.Status)
+		if errors.Is(sql.ErrNoRows, err) {
+			return fiber.NewError(fiber.StatusNotFound, "No tenders with this id")
 		}
 		if err != nil {
-			return fiber.ErrInternalServerError
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid tender format")
 		}
 
-		response, err := json.Marshal(status)
+		response, err := json.Marshal(myTender.Status)
 		if err != nil {
-			return fiber.ErrBadRequest
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
+
+		//тут можно сделать проверку, показывать ли тендер в зависимости от юзернейм
 
 		ctx.Status(http.StatusOK)
 		ctx.Write(response)
 		return nil
 	})
 
-	//app.Put("/api/tenders/:tenderID/status", func(ctx fiber.Ctx) error {
-	//	tenderID := ctx.Params("tenderID", "")
-	//	if tenderID == "" {
-	//		return fiber.ErrBadRequest
-	//	}
-	//
-	//
-	//})
+	app.Put("/api/tenders/:tenderID/status", func(ctx fiber.Ctx) error {
+		tenderID := ctx.Params("tenderID", "")
+		if tenderID == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "Please specify tender id")
+		}
+
+		myTender := tender.NewTender()
+		myTender.Id = tenderID
+
+		body := ctx.Body()
+		err = json.Unmarshal(body, &myTender)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		//проверка статуса на корректность
+		err = myTender.ValidateStatus()
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		query := `UPDATE tenders SET status = $1 WHERE id = $2`
+		result, err := db.Exec(query, myTender.Status, tenderID)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		if rowsAffected == 0 {
+			return fiber.NewError(fiber.StatusNotFound, "no tender with this id found")
+		}
+		//добавить проверку юзера
+
+		ctx.Status(http.StatusOK)
+		ctx.Write([]byte("tender status updated, refresh page to see update"))
+		return nil
+	})
+
+	app.Patch("/api/tenders/:tenderID/edit", func(ctx fiber.Ctx) error {
+		tenderID := ctx.Params("tenderID", "")
+		if tenderID == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "Please specify tender id")
+		}
+
+		myTender := tender.NewTender()
+		myTender.Id = tenderID
+
+		body := ctx.Body()
+		err = json.Unmarshal(body, &myTender)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		//проверки, добавить проверку юзера
+
+		err = myTender.ValidateTenderServiceType()
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		err = myTender.ValidateStringFieldsLen()
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		err = myTender.ValidateStatus()
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		// Поиск записи с нужным ID
+		existingTender := tender.NewTender()
+		err = db.QueryRow("SELECT name, description, service_type, status, organization_id, creator_username, version FROM tenders WHERE id = $1 ORDER BY version DESC LIMIT 1", myTender.Id).Scan(
+			&existingTender.Name,
+			&existingTender.Description,
+			&existingTender.ServiceType,
+			&existingTender.Status,
+			&existingTender.OrganizationId,
+			&existingTender.CreatorUsername,
+			&existingTender.Version,
+		)
+		if err != nil {
+			if errors.Is(sql.ErrNoRows, err) {
+				return fiber.NewError(fiber.StatusNotFound, "tender with this id not found")
+			}
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		if myTender.Name == "" {
+			myTender.Name = existingTender.Name
+		}
+		if myTender.Description == "" {
+			myTender.Description = existingTender.Description
+		}
+		if myTender.ServiceType == "" {
+			myTender.ServiceType = existingTender.ServiceType
+		}
+
+		myTender.OrganizationId = existingTender.OrganizationId
+
+		myTender.CreatorUsername = existingTender.CreatorUsername
+
+		// Увеличиваем версию
+		myTender.Version = existingTender.Version + 1
+
+		query := "INSERT INTO tenders (id, name, description, service_type, status, organization_id, creator_username, version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+		_, err := db.Exec(query, myTender.Id, myTender.Name, myTender.Description, myTender.ServiceType, myTender.Status, myTender.OrganizationId, myTender.CreatorUsername, myTender.Version)
+
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		response, err := json.Marshal(myTender)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		ctx.Status(http.StatusOK)
+		ctx.Write(response)
+		return nil
+
+	})
 
 	err = app.Listen(serverAddress)
 	if err != nil {

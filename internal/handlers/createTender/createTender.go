@@ -53,7 +53,7 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = myTender.ValidateUser(tC.db)
+	err = myTender.ValidateUserCreation(tC.db)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -74,16 +74,17 @@ OrgId AS (
 )
 
 -- Шаг 3: Вставить данные в таблицу tenders
-INSERT INTO tenders (creator_username, name, description, service_type, organization_id)
+INSERT INTO tenders (creator_username, id, name, description, service_type, organization_id)
 VALUES (
     $1,
     $2,
     $3,
     $4,
+	$5,
     (SELECT organization_id FROM OrgId)
 );
 `
-	_, err = tC.db.Exec(sqlStatement, myTender.CreatorUsername, myTender.Name, myTender.Description, myTender.ServiceType)
+	_, err = tC.db.Exec(sqlStatement, myTender.CreatorUsername, myTender.Id, myTender.Name, myTender.Description, myTender.ServiceType)
 	if err != nil {
 		http.Error(w, "cannot insert query in tenders table", http.StatusBadRequest)
 	}

@@ -42,7 +42,18 @@ func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	myTender := tender.NewTender()
 
 	if serviceType == "" {
-		rows, err := aT.db.Query("SELECT * FROM tenders ORDER BY name LIMIT $1 OFFSET $2", limit, offset)
+		query := `SELECT t.id, t.name, t.description, t.service_type, t.status, t.organization_id, t.creator_username, t.created_at, t.version
+		FROM tenders t
+		JOIN (
+			SELECT id, MAX(version) as max_version
+		FROM tenders
+		GROUP BY id
+		) subquery
+		ON t.id = subquery.id AND t.version = subquery.max_version
+		ORDER BY t.name
+		LIMIT $1 OFFSET $2;`
+
+		rows, err := aT.db.Query(query, limit, offset)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +73,19 @@ func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		rows, err := aT.db.Query("SELECT * FROM tenders WHERE service_type = $1 ORDER BY name LIMIT $2 OFFSET $3", serviceType, limit, offset)
+		query := `SELECT t.id, t.name, t.description, t.service_type, t.status, t.organization_id, t.creator_username, t.created_at, t.version
+		FROM tenders t
+		JOIN (
+			SELECT id, MAX(version) as max_version
+		FROM tenders
+		GROUP BY id
+		) subquery
+		ON t.id = subquery.id AND t.version = subquery.max_version
+		WHERE t.service_type = $1
+		ORDER BY t.name
+		LIMIT $2 OFFSET $3;`
+
+		rows, err := aT.db.Query(query, serviceType, limit, offset)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

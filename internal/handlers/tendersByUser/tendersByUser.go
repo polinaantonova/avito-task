@@ -46,18 +46,31 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := tU.db.Query("SELECT * FROM tenders WHERE creator_username = $1 ORDER BY name LIMIT $2 OFFSET $3", username, limit, offset)
+	query := `SELECT t.id, t.name, t.description, t.service_type, t.status, t.organization_id, t.creator_username, t.created_at, t.version
+FROM tenders t
+JOIN (
+    SELECT id, MAX(version) as max_version
+    FROM tenders
+    GROUP BY id
+) subquery
+ON t.id = subquery.id AND t.version = subquery.max_version
+WHERE t.creator_username = $1
+ORDER BY t.name
+LIMIT $2 OFFSET $3;`
+
+	rows, err := tU.db.Query(query, username, limit, offset)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
 
 		if err != nil {
-			http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		filteredTenders.AddTender(myTender)

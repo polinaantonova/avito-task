@@ -65,19 +65,19 @@ func TestValidation(t *testing.T) {
 
 		t.Run("username validation error", func(t *testing.T) {
 			tender.CreatorUsername = "user100"
-			err := tender.ValidateUser(db)
+			err := tender.ValidateUserCreation(db)
 			require.Error(t, err)
 		})
 
 		t.Run("username validation ok", func(t *testing.T) {
 			tender.CreatorUsername = "user1"
-			err := tender.ValidateUser(db)
+			err := tender.ValidateUserCreation(db)
 			require.Nil(t, err)
 		})
 
 		t.Run("username validation empty", func(t *testing.T) {
 			tender.CreatorUsername = ""
-			err := tender.ValidateUser(db)
+			err := tender.ValidateUserCreation(db)
 			require.Error(t, err)
 		})
 	})

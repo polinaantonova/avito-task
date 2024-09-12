@@ -20,7 +20,7 @@ func (t *Tender) ValidateTenderServiceType() error {
 func (t *Tender) ValidateStatus() error {
 	var validStatus = [3]string{"Created", "Published", "Closed"}
 	for _, status := range validStatus {
-		if t.ServiceType == status {
+		if t.Status == status {
 			return nil
 		}
 	}
@@ -37,7 +37,7 @@ func (t *Tender) ValidateStringFieldsLen() error {
 	return nil
 }
 
-func (t *Tender) ValidateUser(db *sql.DB) error {
+func (t *Tender) ValidateUserCreation(db *sql.DB) error {
 
 	if t.CreatorUsername == "" {
 		return errors.New("please specify creator username")
