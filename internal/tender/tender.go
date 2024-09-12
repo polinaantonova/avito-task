@@ -28,7 +28,7 @@ func NewTender() *Tender {
 }
 
 type TenderList struct {
-	tenderList []*Tender
+	tenderList []*Tender `json:"tenderList"`
 }
 
 func NewTenderList() *TenderList {

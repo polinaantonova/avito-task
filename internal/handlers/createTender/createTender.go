@@ -1,6 +1,7 @@
 package createTender
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -8,13 +9,13 @@ import (
 )
 
 type TenderCreator struct {
-	tenders *tender.TenderList
+	db *sql.DB
 }
 
-func NewTenderCreator(tenders *tender.TenderList) *TenderCreator {
+func NewTenderCreator(db *sql.DB) *TenderCreator {
 
 	return &TenderCreator{
-		tenders: tenders,
+		db: db,
 	}
 }
 
@@ -52,14 +53,40 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = myTender.ValidateUser()
+	err = myTender.ValidateUser(tC.db)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	tC.tenders.AddTender(myTender)
+	sqlStatement := `
+WITH UserId AS (
+    SELECT id
+    FROM employee
+    WHERE username = $1
+),
 
+-- Шаг 2: Найти organization_id из таблицы organization_responsible
+OrgId AS (
+    SELECT organization_id
+    FROM organization_responsible
+    WHERE user_id = (SELECT id FROM UserId)
+)
+
+-- Шаг 3: Вставить данные в таблицу tenders
+INSERT INTO tenders (creator_username, name, description, service_type, organization_id)
+VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    (SELECT organization_id FROM OrgId)
+);
+`
+	_, err = tC.db.Exec(sqlStatement, myTender.CreatorUsername, myTender.Name, myTender.Description, myTender.ServiceType)
+	if err != nil {
+		http.Error(w, "cannot insert query in tenders table", http.StatusBadRequest)
+	}
 	response, err := json.Marshal(myTender)
 	if err != nil {
 		http.Error(w, "bad JSON", http.StatusBadRequest)
@@ -68,4 +95,5 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
+	w.Write([]byte("\ntender added to database"))
 }

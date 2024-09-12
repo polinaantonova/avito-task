@@ -3,10 +3,7 @@ package tender
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
-	"os"
-
 	_ "github.com/lib/pq"
 )
 
@@ -40,49 +37,11 @@ func (t *Tender) ValidateStringFieldsLen() error {
 	return nil
 }
 
-func (t *Tender) ValidateUser() error {
+func (t *Tender) ValidateUser(db *sql.DB) error {
 
 	if t.CreatorUsername == "" {
 		return errors.New("please specify creator username")
 	}
-
-	user := os.Getenv("POSTGRES_USERNAME")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	host := os.Getenv("POSTGRES_HOST")
-	port := os.Getenv("POSTGRES_PORT")
-	dbName := os.Getenv("POSTGRES_DATABASE")
-
-	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
-
-		//errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		//return errors.New(errorText)
-
-		user = "cnrprod1725725190-team-78136"
-		password = "cnrprod1725725190-team-78136"
-		host = "rc1b-5xmqy6bq501kls4m.mdb.yandexcloud.net"
-		port = "6432"
-		dbName = "cnrprod1725725190-team-78136"
-	}
-
-	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v",
-		host, port, user, password, dbName)
-
-	db, err := sql.Open("postgres", psqlInfo)
-
-	if err != nil {
-		errorText := fmt.Sprintf("cannot connect to database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		return errors.New(errorText)
-	}
-
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		errorText := fmt.Sprintf("cannot ping database\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		return errors.New(errorText)
-	}
-
-	fmt.Println("Successfully connected!")
 
 	query := `WITH employee_id AS (
     SELECT id
@@ -105,7 +64,7 @@ LIMIT 1;`
 	*/
 
 	var userID uuid.UUID
-	err = db.QueryRow(query, t.CreatorUsername).Scan(&userID)
+	err := db.QueryRow(query, t.CreatorUsername).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("user not found or doesn't belong to org responsible")

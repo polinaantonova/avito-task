@@ -1,0 +1,14 @@
+curl -X POST --data '{"name": "АДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Manufacture", "creatorUsername": "user2"}' localhost:8080/api/tenders/new
+{"id":"","name":"АДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Manufacture","status":"","organizationId":"","creatorUsername":"user2","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Construction", "creatorUsername": "user3"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Construction","status":"","organizationId":"","creatorUsername":"user3","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Construction", "creatorUsername": "user4"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Construction","status":"","organizationId":"","creatorUsername":"user4","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Construction", "creatorUsername": "user5"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Construction","status":"","organizationId":"","creatorUsername":"user5","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Delivery", "creatorUsername": "user5"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Delivery","status":"","organizationId":"","creatorUsername":"user5","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Delivery", "creatorUsername": "user6"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Delivery","status":"","organizationId":"","creatorUsername":"user6","createdAt":"","version":0}
+curl -X POST --data '{"name": "ВДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Delivery", "creatorUsername": "user7"}' localhost:8080/api/tenders/new
+{"id":"","name":"ВДоставка","description":"Доставить товары из Казани в Москву","serviceType":"Delivery","status":"","organizationId":"","creatorUsername":"user7","createdAt":"","version":0}

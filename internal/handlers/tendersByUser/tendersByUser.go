@@ -1,20 +1,20 @@
 package tendersByUser
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"polina.com/m/internal/tender"
-	"sort"
 	"strconv"
 )
 
 type TendersByUser struct {
-	tenders *tender.TenderList
+	db *sql.DB
 }
 
-func NewTendersByUser(tenders *tender.TenderList) *TendersByUser {
+func NewTendersByUser(db *sql.DB) *TendersByUser {
 	return &TendersByUser{
-		tenders: tenders,
+		db: db,
 	}
 }
 
@@ -39,17 +39,33 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filteredTenders := tender.NewTenderList()
-	paginatedTenders := tender.NewTenderList()
+	myTender := tender.NewTender()
 
 	if username == "" {
 		http.Error(w, "please specify user", http.StatusUnauthorized)
 		return
-	} else {
-		for _, myTender := range tU.tenders.List() {
-			if myTender.CreatorUsername == username {
-				filteredTenders.AddTender(myTender)
-			}
+	}
+
+	rows, err := tU.db.Query("SELECT * FROM tenders WHERE creator_username = $1 ORDER BY name LIMIT $2 OFFSET $3", username, limit, offset)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
+
+		if err != nil {
+			http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+			return
 		}
+		filteredTenders.AddTender(myTender)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if len(filteredTenders.List()) == 0 {
@@ -57,24 +73,7 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sort.SliceStable(filteredTenders.List(), func(i, j int) bool {
-		return filteredTenders.List()[i].Name < filteredTenders.List()[j].Name
-	})
-
-	start := offset
-	end := offset + limit
-	if start > len(filteredTenders.List()) {
-		start = len(filteredTenders.List())
-	}
-	if end > len(filteredTenders.List()) {
-		end = len(filteredTenders.List())
-	}
-
-	for _, filteredTender := range filteredTenders.List()[start:end] {
-		paginatedTenders.AddTender(filteredTender)
-	}
-
-	response, err := json.Marshal(paginatedTenders.List())
+	response, err := json.Marshal(filteredTenders.List())
 	if err != nil {
 		http.Error(w, "bad JSON", http.StatusBadRequest)
 		return

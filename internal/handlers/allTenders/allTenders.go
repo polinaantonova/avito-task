@@ -1,20 +1,20 @@
 package allTenders
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"polina.com/m/internal/tender"
-	"sort"
 	"strconv"
 )
 
 type AllTenders struct {
-	tenders *tender.TenderList
+	db *sql.DB
 }
 
-func NewAllTenders(tenders *tender.TenderList) *AllTenders {
+func NewAllTenders(db *sql.DB) *AllTenders {
 	return &AllTenders{
-		tenders: tenders,
+		db: db,
 	}
 }
 
@@ -39,36 +39,52 @@ func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filteredTenders := tender.NewTenderList()
-	paginatedTenders := tender.NewTenderList()
+	myTender := tender.NewTender()
 
-	if serviceType != "" {
-		for _, myTender := range aT.tenders.List() {
-			if myTender.ServiceType == serviceType {
-				filteredTenders.AddTender(myTender)
+	if serviceType == "" {
+		rows, err := aT.db.Query("SELECT * FROM tenders ORDER BY name LIMIT $1 OFFSET $2", limit, offset)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
+			if err != nil {
+				http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+				return
 			}
+			filteredTenders.AddTender(myTender)
+		}
+		if err := rows.Err(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	} else {
-		filteredTenders = aT.tenders
+		rows, err := aT.db.Query("SELECT * FROM tenders WHERE service_type = $1 ORDER BY name LIMIT $2 OFFSET $3", serviceType, limit, offset)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
+			if err != nil {
+				http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+				return
+			}
+			filteredTenders.AddTender(myTender)
+		}
+		if err := rows.Err(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 	}
 
-	sort.SliceStable(filteredTenders.List(), func(i, j int) bool {
-		return filteredTenders.List()[i].Name < filteredTenders.List()[j].Name
-	})
-
-	start := offset
-	end := offset + limit
-	if start > len(filteredTenders.List()) {
-		start = len(filteredTenders.List())
-	}
-	if end > len(filteredTenders.List()) {
-		end = len(filteredTenders.List())
-	}
-
-	for _, filteredTender := range filteredTenders.List()[start:end] {
-		paginatedTenders.AddTender(filteredTender)
-	}
-
-	response, err := json.Marshal(paginatedTenders.List())
+	response, err := json.Marshal(filteredTenders.List())
 	if err != nil {
 		http.Error(w, "bad JSON", http.StatusBadRequest)
 		return
@@ -76,5 +92,4 @@ func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
-
 }
