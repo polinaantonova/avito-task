@@ -39,7 +39,6 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filteredTenders := tender.NewTenderList()
-	myTender := tender.NewTender()
 
 	if username == "" {
 		http.Error(w, "please specify user", http.StatusUnauthorized)
@@ -67,6 +66,7 @@ LIMIT $2 OFFSET $3;`
 
 	defer rows.Close()
 	for rows.Next() {
+		myTender := tender.NewTender()
 		err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
 
 		if err != nil {

@@ -17,30 +17,29 @@ type Tender struct {
 	Version         int32  `json:"version"`
 }
 
-func NewTender() *Tender {
-	return &Tender{
+func NewTender() Tender {
+	return Tender{
 		Id:             uuid.New().String(),
 		OrganizationId: uuid.New().String(),
 		Version:        1,
-		Status:         "Created",
 		CreatedAt:      time.Now().Format(time.RFC3339),
 	}
 }
 
 type TenderList struct {
-	tenderList []*Tender `json:"tenderList"`
+	tenderList []Tender `json:"tenderList"`
 }
 
 func NewTenderList() *TenderList {
 	return &TenderList{
-		tenderList: make([]*Tender, 0, 8),
+		tenderList: make([]Tender, 0, 8),
 	}
 }
 
-func (tL *TenderList) List() []*Tender {
+func (tL *TenderList) List() []Tender {
 	return tL.tenderList
 }
 
-func (tL *TenderList) AddTender(tender *Tender) {
+func (tL *TenderList) AddTender(tender Tender) {
 	tL.tenderList = append(tL.tenderList, tender)
 }
