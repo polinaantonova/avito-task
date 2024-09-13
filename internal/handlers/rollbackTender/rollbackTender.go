@@ -8,8 +8,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"net/http"
 	"polina.com/m/internal/errorMessage"
-	"polina.com/m/internal/jsonValidations"
 	"polina.com/m/internal/tender"
+	"polina.com/m/internal/validations"
 	"strconv"
 )
 
@@ -27,7 +27,7 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 
 	version, _ := strconv.Atoi(versionStr)
 
-	rollback := jsonValidations.NewRollbackVersionValidator()
+	rollback := validations.NewRollbackVersionValidator()
 	body := ctx.Body()
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()

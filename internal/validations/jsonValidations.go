@@ -1,14 +1,10 @@
-package jsonValidations
+package validations
 
 import "errors"
 
 type StatusUpdateValidator struct {
 	Username string `json:"username"`
 	Status   string `json:"status"`
-}
-
-func NewStatusUpdateValidator() *StatusUpdateValidator {
-	return &StatusUpdateValidator{}
 }
 
 type TenderEditValidator struct {

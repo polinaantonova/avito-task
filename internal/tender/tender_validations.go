@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"polina.com/m/internal/validations"
 )
 
 func ValidateTenderServiceType(service string) error {
@@ -73,4 +74,8 @@ LIMIT 1;`
 		}
 	}
 	return nil
+}
+
+func NewStatusUpdateValidator() *validations.StatusUpdateValidator {
+	return &validations.StatusUpdateValidator{}
 }

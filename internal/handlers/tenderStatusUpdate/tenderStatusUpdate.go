@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"polina.com/m/internal/errorMessage"
-	"polina.com/m/internal/jsonValidations"
 	"polina.com/m/internal/tender"
 )
 
@@ -23,7 +22,7 @@ func TenderStatusUpdate(ctx fiber.Ctx, db *sql.DB) error {
 		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, "unvalid tender format")
 	}
 
-	statusUpdateValidator := jsonValidations.NewStatusUpdateValidator()
+	statusUpdateValidator := tender.NewStatusUpdateValidator()
 	body := ctx.Body()
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
@@ -109,7 +108,7 @@ func TenderStatusUpdate(ctx fiber.Ctx, db *sql.DB) error {
 	}
 
 	ctx.Status(http.StatusOK)
-	ctx.Write([]byte("tender status updated, refresh page to see update"))
+	ctx.Write([]byte("tender status updated, refresh page to see update\n"))
 	ctx.Write(response)
 	return nil
 }

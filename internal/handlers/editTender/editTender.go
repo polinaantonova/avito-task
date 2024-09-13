@@ -8,8 +8,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"net/http"
 	"polina.com/m/internal/errorMessage"
-	"polina.com/m/internal/jsonValidations"
 	"polina.com/m/internal/tender"
+	"polina.com/m/internal/validations"
 )
 
 func EditTender(ctx fiber.Ctx, db *sql.DB) error {
@@ -18,7 +18,7 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, "Please specify tender id")
 	}
 
-	tenderEditor := jsonValidations.NewTenderEditValidator()
+	tenderEditor := validations.NewTenderEditValidator()
 	body := ctx.Body()
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
@@ -30,10 +30,13 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	}
 
 	//проверки
-	err = tender.ValidateTenderServiceType(tenderEditor.ServiceType)
-	if err != nil {
-		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
+	if tenderEditor.ServiceType != "" {
+		err = tender.ValidateTenderServiceType(tenderEditor.ServiceType)
+		if err != nil {
+			return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
+		}
 	}
+
 	err = tenderEditor.ValidateStringFieldsLen()
 	if err != nil {
 		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
@@ -43,7 +46,6 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	if tenderEditor.Username == "" {
 		return errorMessage.SendErrorMessageFiber(ctx, http.StatusUnauthorized, "please specify username")
 	}
-
 	var exists bool
 
 	//есть ли в таблице тендер с таким id?
