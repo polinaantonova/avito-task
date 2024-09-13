@@ -3,7 +3,6 @@ package allTenders
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
@@ -28,16 +27,8 @@ func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	serviceType := r.URL.Query().Get("service_type")
 	if serviceType != "" {
-		serviceTypeValidation := func(serviceType string) error {
-			validServiceType := [3]string{"Construction", "Delivery", "Manufacture"}
-			for _, service := range validServiceType {
-				if serviceType == service {
-					return nil
-				}
-			}
-			return errors.New("choose correct service type option Construction, Delivery, Manufacture")
-		}
-		err := serviceTypeValidation(serviceType)
+		err := tender.ValidateTenderServiceType(serviceType)
+
 		if err != nil {
 			errorMessage.SendErrorMessage(w, err.Error(), http.StatusBadRequest)
 			return

@@ -7,20 +7,20 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (t *Tender) ValidateTenderServiceType() error {
+func ValidateTenderServiceType(service string) error {
 	var validServiceType = [3]string{"Construction", "Delivery", "Manufacture"}
-	for _, service := range validServiceType {
-		if t.ServiceType == service {
+	for _, validService := range validServiceType {
+		if service == validService {
 			return nil
 		}
 	}
 	return errors.New("choose correct service type option Construction, Delivery, Manufacture")
 }
 
-func (t *Tender) ValidateStatus() error {
-	var validStatus = [3]string{"Created", "Published", "Closed"}
-	for _, status := range validStatus {
-		if t.Status == status {
+func ValidateStatus(status string) error {
+	validStatuses := [3]string{"Created", "Published", "Closed"}
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
 			return nil
 		}
 	}

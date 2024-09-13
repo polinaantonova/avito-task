@@ -19,7 +19,7 @@ func TenderStatus(ctx fiber.Ctx, db *sql.DB) error {
 	myTender := tender.NewTender()
 	myTender.Id = tenderID
 
-	err := db.QueryRow("SELECT status FROM Tenders WHERE id = $1 ORDER BY version DESC LIMIT 1", tenderID).Scan(&myTender.Status)
+	err := db.QueryRow("SELECT status FROM tenders WHERE id = $1 ORDER BY version DESC LIMIT 1", tenderID).Scan(&myTender.Status)
 	if errors.Is(sql.ErrNoRows, err) {
 		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusNotFound, "No tenders with this id")
 	}

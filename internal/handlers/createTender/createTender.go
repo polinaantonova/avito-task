@@ -32,11 +32,11 @@ func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(&myTender); err != nil {
-		errorMessage.SendErrorMessage(w, "check your JSON fields", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "check your JSON schema", http.StatusBadRequest)
 		return
 	}
 
-	err := myTender.ValidateTenderServiceType()
+	err := tender.ValidateTenderServiceType(myTender.ServiceType)
 	if err != nil {
 		errorMessage.SendErrorMessage(w, err.Error(), http.StatusBadRequest)
 		return
