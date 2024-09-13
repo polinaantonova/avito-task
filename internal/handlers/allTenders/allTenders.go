@@ -3,7 +3,9 @@ package allTenders
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
 	"strconv"
 )
@@ -20,11 +22,28 @@ func NewAllTenders(db *sql.DB) *AllTenders {
 
 func (aT *AllTenders) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		errorMessage.SendErrorMessage(w, "this method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	serviceType := r.URL.Query().Get("service_type")
+	if serviceType != "" {
+		serviceTypeValidation := func(serviceType string) error {
+			validServiceType := [3]string{"Construction", "Delivery", "Manufacture"}
+			for _, service := range validServiceType {
+				if serviceType == service {
+					return nil
+				}
+			}
+			return errors.New("choose correct service type option Construction, Delivery, Manufacture")
+		}
+		err := serviceTypeValidation(serviceType)
+		if err != nil {
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
 
@@ -78,7 +97,7 @@ OFFSET
 		rows, err := aT.db.Query(query, limit, offset)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -86,13 +105,18 @@ OFFSET
 			myTender := tender.NewTender()
 			err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
 			if err != nil {
-				http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+				errorMessage.SendErrorMessage(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
 				return
 			}
 			filteredTenders.AddTender(myTender)
 		}
-		if err := rows.Err(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err = rows.Err(); err != nil {
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if len(filteredTenders.List()) == 0 {
+			errorMessage.SendErrorMessage(w, "no tenders found", http.StatusNotFound)
 			return
 		}
 	} else {
@@ -111,7 +135,7 @@ OFFSET
 		rows, err := aT.db.Query(query, serviceType, limit, offset)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -119,21 +143,26 @@ OFFSET
 			myTender := tender.NewTender()
 			err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
 			if err != nil {
-				http.Error(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
+				errorMessage.SendErrorMessage(w, "cannot select tenders from table tenders", http.StatusInternalServerError)
 				return
 			}
 			filteredTenders.AddTender(myTender)
 		}
-		if err := rows.Err(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		if err = rows.Err(); err != nil {
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		if len(filteredTenders.List()) == 0 {
+			errorMessage.SendErrorMessage(w, "no tenders found", http.StatusNotFound)
+			return
+		}
 	}
 
 	response, err := json.Marshal(filteredTenders.List())
 	if err != nil {
-		http.Error(w, "bad JSON", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "bad JSON", http.StatusBadRequest)
 		return
 	}
 

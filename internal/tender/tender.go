@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// example: OrderedMap { "id": "550e8400-e29b-41d4-a716-446655440000", "name": "Доставка товары Казань - Москва",
+// "description": "Нужно доставить оборудовоние для олимпиады по робототехники", "status": "Created",
+// "serviceType": "Delivery", "version": 1, "createdAt": "2006-01-02T15:04:05Z07:00" }
 type Tender struct {
 	Id              string `json:"id"`
 	Name            string `json:"name"`

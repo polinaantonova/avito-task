@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v3"
 	"net/http"
+	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
 	"strconv"
 )
@@ -14,11 +15,11 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 	tenderID := ctx.Params("tenderID", "")
 	versionStr := ctx.Params("version", "")
 	if tenderID == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Please specify tender id")
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, "Please specify tender id")
 	}
 
 	if versionStr == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Please specify version")
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, "Please specify version")
 	}
 
 	version, _ := strconv.Atoi(versionStr)
@@ -29,7 +30,7 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 	body := ctx.Body()
 	err := json.Unmarshal(body, &myTender)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 	//тут доделать проверку по юзеру
 
@@ -43,9 +44,9 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 	)
 	if err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
-			return fiber.NewError(fiber.StatusNotFound, "tender id or version not found")
+			return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusNotFound, "tender id or version not found")
 		}
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	//ищем макс верию в таблице
@@ -54,9 +55,9 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 	if err != nil {
 		if err != nil {
 			if errors.Is(sql.ErrNoRows, err) {
-				return fiber.NewError(fiber.StatusNotFound, "tender id or version not found")
+				return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusNotFound, "tender id or version not found")
 			}
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 		}
 	}
 	//и еще увеличиваем
@@ -65,11 +66,11 @@ func RollbackTender(ctx fiber.Ctx, db *sql.DB) error {
 	_, err = db.Exec(query, myTender.Id, myTender.Name, myTender.Description, myTender.ServiceType, myTender.Status, myTender.OrganizationId, myTender.CreatorUsername, myTender.Version)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusInternalServerError, err.Error())
 	}
 	response, err := json.Marshal(myTender)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 	ctx.Status(http.StatusOK)
 	ctx.Write(response)

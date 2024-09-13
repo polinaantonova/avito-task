@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
 	"strconv"
 )
@@ -20,7 +21,7 @@ func NewTendersByUser(db *sql.DB) *TendersByUser {
 
 func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		errorMessage.SendErrorMessage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -41,7 +42,7 @@ func (tU *TendersByUser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filteredTenders := tender.NewTenderList()
 
 	if username == "" {
-		http.Error(w, "please specify user", http.StatusUnauthorized)
+		errorMessage.SendErrorMessage(w, "please specify user", http.StatusUnauthorized)
 		return
 	}
 
@@ -60,7 +61,7 @@ LIMIT $2 OFFSET $3;`
 	rows, err := tU.db.Query(query, username, limit, offset)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -70,25 +71,25 @@ LIMIT $2 OFFSET $3;`
 		err = rows.Scan(&myTender.Id, &myTender.Name, &myTender.Description, &myTender.ServiceType, &myTender.Status, &myTender.OrganizationId, &myTender.CreatorUsername, &myTender.CreatedAt, &myTender.Version)
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		filteredTenders.AddTender(myTender)
 	}
 
 	if err = rows.Err(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorMessage.SendErrorMessage(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if len(filteredTenders.List()) == 0 {
-		http.Error(w, "user doesn't exist or didn't create tenders", http.StatusUnauthorized)
+		errorMessage.SendErrorMessage(w, "user doesn't exist or didn't create tenders", http.StatusUnauthorized)
 		return
 	}
 
 	response, err := json.Marshal(filteredTenders.List())
 	if err != nil {
-		http.Error(w, "bad JSON", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "bad JSON", http.StatusBadRequest)
 		return
 	}
 

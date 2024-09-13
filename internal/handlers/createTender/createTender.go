@@ -3,8 +3,8 @@ package createTender
 import (
 	"database/sql"
 	"encoding/json"
-	"io"
 	"net/http"
+	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
 )
 
@@ -13,7 +13,6 @@ type TenderCreator struct {
 }
 
 func NewTenderCreator(db *sql.DB) *TenderCreator {
-
 	return &TenderCreator{
 		db: db,
 	}
@@ -21,42 +20,37 @@ func NewTenderCreator(db *sql.DB) *TenderCreator {
 
 func (tC *TenderCreator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
-	defer r.Body.Close()
-
-	if err != nil {
-		http.Error(w, "Cannot read request body", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	myTender := tender.NewTender()
 	myTender.Status = "Created"
 
-	err = json.Unmarshal(body, &myTender)
-	if err != nil {
-		http.Error(w, "bad JSON", http.StatusBadRequest)
+	//проверить json
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&myTender); err != nil {
+		errorMessage.SendErrorMessage(w, "check your JSON fields", http.StatusBadRequest)
 		return
 	}
 
-	err = myTender.ValidateTenderServiceType()
+	err := myTender.ValidateTenderServiceType()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = myTender.ValidateStringFieldsLen()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = myTender.ValidateUserCreation(tC.db)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		errorMessage.SendErrorMessage(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
@@ -85,12 +79,12 @@ VALUES (
 `
 	_, err = tC.db.Exec(sqlStatement, myTender.CreatorUsername, myTender.Id, myTender.Name, myTender.Description, myTender.ServiceType)
 	if err != nil {
-		http.Error(w, "cannot insert query in tenders table", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "cannot insert query in tenders table", http.StatusBadRequest)
 		return
 	}
 	response, err := json.Marshal(myTender)
 	if err != nil {
-		http.Error(w, "bad JSON", http.StatusBadRequest)
+		errorMessage.SendErrorMessage(w, "bad JSON", http.StatusBadRequest)
 		return
 	}
 

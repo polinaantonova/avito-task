@@ -6,13 +6,14 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v3"
 	"net/http"
+	"polina.com/m/internal/errorMessage"
 	"polina.com/m/internal/tender"
 )
 
 func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	tenderID := ctx.Params("tenderID", "")
 	if tenderID == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Please specify tender id")
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, "Please specify tender id")
 	}
 
 	myTender := tender.NewTender()
@@ -21,17 +22,17 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	body := ctx.Body()
 	err := json.Unmarshal(body, &myTender)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	//проверки, добавить проверку юзера
 	err = myTender.ValidateTenderServiceType()
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 	err = myTender.ValidateStringFieldsLen()
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	// Поиск записи с нужным ID
@@ -47,9 +48,9 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	)
 	if err != nil {
 		if errors.Is(sql.ErrNoRows, err) {
-			return fiber.NewError(fiber.StatusNotFound, "tender with this id not found")
+			return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusNotFound, "tender with this id not found")
 		}
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	if myTender.Name == "" {
@@ -72,12 +73,12 @@ func EditTender(ctx fiber.Ctx, db *sql.DB) error {
 	_, err = db.Exec(query, myTender.Id, myTender.Name, myTender.Description, myTender.ServiceType, myTender.Status, myTender.OrganizationId, myTender.CreatorUsername, myTender.Version)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusInternalServerError, err.Error())
 	}
 
 	response, err := json.Marshal(myTender)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return errorMessage.SendErrorMessageFiber(ctx, fiber.StatusBadRequest, err.Error())
 	}
 
 	ctx.Status(http.StatusOK)
