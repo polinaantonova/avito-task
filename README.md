@@ -1,5 +1,6 @@
 ## ЗАПУСК ПРИЛОЖЕНИЯ
 docker build -t my-go-server .
+
 docker run --rm -p 8080:8080 my-go-server
 
 Пинг: сurl -i localhost:8080/api/ping
