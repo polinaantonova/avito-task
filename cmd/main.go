@@ -36,11 +36,10 @@ func main() {
 		//errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
 		//return errors.New(errorText)
 
-		user = "cnrprod1725725190-team-78136"
-		password = "cnrprod1725725190-team-78136"
-		host = "rc1b-5xmqy6bq501kls4m.mdb.yandexcloud.net"
+	
+		host = "localhost"
 		port = "6432"
-		dbName = "cnrprod1725725190-team-78136"
+		dbName = "mydatabase"
 	}
 
 	psqlInfo := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v",
