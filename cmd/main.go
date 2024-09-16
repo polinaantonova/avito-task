@@ -34,7 +34,7 @@ func main() {
 	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
 
 		errorText := fmt.Sprintf("empty env variables\n host: %v\n port: %v\n user: %v\n password: %v\n dbName: %v\n", host, port, user, password, dbName)
-		return errors.New(errorText)
+		log.Fatal(errorText)
 
 		//host = "localhost"
 		//port = "6432"
