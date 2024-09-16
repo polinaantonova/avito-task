@@ -2,13 +2,15 @@
 docker build -t my-go-server .
 docker run --rm -p 8080:8080 my-go-server
 
-Пинг: url -i localhost:8080/api/ping
+Пинг: сurl -i localhost:8080/api/ping
 
 Далее как описано в задании, например, добавление тендера
 curl -i -X POST --data '{"name": "БДоставка", "description": "Доставить товары из Казани в Москву", "serviceType": "Delivery", "creatorUsername": "user4"}' localhost:8080/api/tenders/new
 и т.д.
 
 Если есть вопросы или что-то не работает, пишите, пожалуйста, на polja.miteva@gmail.com
+
+##СТАРЫЙ КОММЕНТАРИЙ
 
 
 
